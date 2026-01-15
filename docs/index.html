@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>simple_sdf - Signed Distance Field Library for Eiffel</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="images/logo.png" alt="simple_* logo" class="logo">
+        </div>
+        <h1>simple_sdf</h1>
+        <p class="tagline">Signed Distance Fields and Ray Marching for Eiffel</p>
+        <div class="badges">
+            <span class="badge badge-version">v1.0.0</span>
+            <span class="badge badge-license">MIT</span>
+            <span class="badge badge-rfc">GPU Ready</span>
+        </div>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#quick-start">Quick Start</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#primitives">Primitives</a></li>
+            <li><a href="#operations">Operations</a></li>
+            <li><a href="#visualization">Visualization</a></li>
+            <li><a href="https://github.com/simple-eiffel/simple_sdf">GitHub</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section id="overview">
+            <h2>Overview</h2>
+            <p>
+                <strong>simple_sdf</strong> is a Signed Distance Field (SDF) library for Eiffel that provides
+                geometric primitives, boolean operations, and ray marching capabilities. Use it for procedural
+                modeling, CSG operations, collision detection, and real-time visualization.
+            </p>
+            <p>
+                With GPU acceleration via <a href="https://simple-eiffel.github.io/simple_vulkan">simple_vulkan</a>,
+                achieves <strong>63 FPS at 4K resolution</strong> for real-time ray marching.
+            </p>
+            <p>
+                Part of the <a href="https://github.com/simple-eiffel">Simple Eiffel</a> ecosystem.
+            </p>
+        </section>
+
+        <section id="quick-start">
+            <h2>Quick Start</h2>
+
+            <h3>Installation</h3>
+            <ol>
+                <li>Set the environment variable:
+<pre><code>set SIMPLE_EIFFEL=D:\prod</code></pre>
+                </li>
+                <li>Add to your ECF file:
+<pre><code>&lt;library name="simple_sdf" location="$SIMPLE_EIFFEL/simple_sdf/simple_sdf.ecf"/&gt;</code></pre>
+                </li>
+            </ol>
+
+            <h3>Basic Usage</h3>
+<pre><code><span class="keyword">local</span>
+    sdf: <span class="type">SIMPLE_SDF</span>
+    sphere: <span class="type">SDF_SPHERE</span>
+    box: <span class="type">SDF_BOX</span>
+    result: <span class="type">SDF_SHAPE</span>
+<span class="keyword">do</span>
+    <span class="keyword">create</span> sdf
+
+    <span class="comment">-- Create primitives</span>
+    sphere := sdf.sphere (1.0)
+    box := sdf.cube (0.8)
+
+    <span class="comment">-- Boolean operations</span>
+    result := sdf.union (sphere, box)
+    result := sdf.intersection (sphere, box)
+    result := sdf.difference (sphere, box)
+
+    <span class="comment">-- Query distance</span>
+    print (result.distance (sdf.vec3 (0, 0, 0)))
+<span class="keyword">end</span></code></pre>
+        </section>
+
+        <section id="features">
+            <h2>Key Features</h2>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Geometric Primitives</h4>
+                    <p>Sphere, box, cylinder, torus, plane, and more.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h4>Boolean Operations</h4>
+                    <p>Union, intersection, and difference with smooth blending.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h4>Ray Marching</h4>
+                    <p>High-quality rendering with configurable parameters.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h4>GPU Acceleration</h4>
+                    <p>63 FPS at 4K via Vulkan compute shaders.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h4>Transformations</h4>
+                    <p>Translate, rotate, scale any SDF shape.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h4>Domain Operations</h4>
+                    <p>Repetition, symmetry, and twist modifiers.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="primitives">
+            <h2>Primitives</h2>
+
+            <div class="api-section">
+                <h3>SDF_SPHERE</h3>
+                <div class="signature">sdf.sphere (radius: REAL_64): SDF_SPHERE</div>
+                <p>Creates a sphere centered at origin with given radius.</p>
+<pre><code>sphere := sdf.sphere (1.5)
+sphere.set_position (sdf.vec3 (2, 0, 0)).do_nothing</code></pre>
+            </div>
+
+            <div class="api-section">
+                <h3>SDF_BOX</h3>
+                <div class="signature">sdf.cube (size: REAL_64): SDF_BOX</div>
+                <div class="signature">sdf.box (width, height, depth: REAL_64): SDF_BOX</div>
+                <p>Creates a box centered at origin.</p>
+<pre><code>cube := sdf.cube (2.0)            <span class="comment">-- 2x2x2 cube</span>
+box := sdf.box (2.0, 1.0, 0.5)    <span class="comment">-- Rectangular box</span></code></pre>
+            </div>
+
+            <div class="api-section">
+                <h3>SDF_CYLINDER</h3>
+                <div class="signature">sdf.cylinder (radius, height: REAL_64): SDF_CYLINDER</div>
+                <p>Creates a cylinder along the Y axis.</p>
+            </div>
+
+            <div class="api-section">
+                <h3>SDF_TORUS</h3>
+                <div class="signature">sdf.torus (major_radius, minor_radius: REAL_64): SDF_TORUS</div>
+                <p>Creates a torus (donut shape) in the XZ plane.</p>
+            </div>
+
+            <div class="api-section">
+                <h3>SDF_PLANE</h3>
+                <div class="signature">sdf.plane (normal: SDF_VEC3; distance: REAL_64): SDF_PLANE</div>
+                <p>Creates an infinite plane with given normal and distance from origin.</p>
+<pre><code><span class="comment">-- Ground plane</span>
+ground := sdf.plane (sdf.vec3 (0, 1, 0), 0.0)</code></pre>
+            </div>
+        </section>
+
+        <section id="operations">
+            <h2>Boolean Operations</h2>
+
+            <div class="api-section">
+                <h3>Union</h3>
+                <div class="signature">sdf.union (a, b: SDF_SHAPE): SDF_SHAPE</div>
+                <div class="signature">sdf.smooth_union (a, b: SDF_SHAPE; k: REAL_64): SDF_SHAPE</div>
+                <p>Combine two shapes. Smooth union blends edges with radius k.</p>
+<pre><code><span class="comment">-- Sharp union</span>
+combined := sdf.union (sphere, box)
+
+<span class="comment">-- Smooth union with blend radius 0.3</span>
+combined := sdf.smooth_union (sphere, box, 0.3)</code></pre>
+            </div>
+
+            <div class="api-section">
+                <h3>Intersection</h3>
+                <div class="signature">sdf.intersection (a, b: SDF_SHAPE): SDF_SHAPE</div>
+                <div class="signature">sdf.smooth_intersection (a, b: SDF_SHAPE; k: REAL_64): SDF_SHAPE</div>
+                <p>Keep only the overlapping volume of two shapes.</p>
+            </div>
+
+            <div class="api-section">
+                <h3>Difference</h3>
+                <div class="signature">sdf.difference (a, b: SDF_SHAPE): SDF_SHAPE</div>
+                <div class="signature">sdf.smooth_difference (a, b: SDF_SHAPE; k: REAL_64): SDF_SHAPE</div>
+                <p>Subtract shape b from shape a.</p>
+<pre><code><span class="comment">-- Hollow sphere (sphere with smaller sphere removed)</span>
+outer := sdf.sphere (1.0)
+inner := sdf.sphere (0.8)
+hollow := sdf.difference (outer, inner)</code></pre>
+            </div>
+        </section>
+
+        <section id="transformations">
+            <h2>Transformations</h2>
+
+            <p>All shapes support fluent builder-style transformations:</p>
+
+<pre><code><span class="comment">-- Create and transform</span>
+shape := sdf.sphere (1.0)
+    .set_position (sdf.vec3 (2, 1, 0))
+    .set_rotation (sdf.vec3 (0, 45, 0))
+    .set_scale (sdf.vec3 (1, 2, 1))</code></pre>
+
+            <table class="api-table">
+                <tr>
+                    <th>Method</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><code>set_position (v: SDF_VEC3)</code></td>
+                    <td>Set world position</td>
+                </tr>
+                <tr>
+                    <td><code>set_rotation (v: SDF_VEC3)</code></td>
+                    <td>Set rotation in degrees (Euler angles)</td>
+                </tr>
+                <tr>
+                    <td><code>set_scale (v: SDF_VEC3)</code></td>
+                    <td>Set non-uniform scale</td>
+                </tr>
+                <tr>
+                    <td><code>translate (v: SDF_VEC3)</code></td>
+                    <td>Add to current position</td>
+                </tr>
+                <tr>
+                    <td><code>rotate (v: SDF_VEC3)</code></td>
+                    <td>Add to current rotation</td>
+                </tr>
+            </table>
+        </section>
+
+        <section id="visualization">
+            <h2>Visualization Backends</h2>
+
+            <p>simple_sdf supports multiple rendering backends:</p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>MiniFB (CPU)</h4>
+                    <p>CPU-based ray marching. 30-40 FPS at 1080p.</p>
+<pre><code>ec -batch -config simple_sdf.ecf \
+   -target simple_sdf_minifb_demo</code></pre>
+                </div>
+
+                <div class="feature-card">
+                    <h4>Raylib (CPU)</h4>
+                    <p>CPU rendering with raylib window/input.</p>
+<pre><code>ec -batch -config simple_sdf.ecf \
+   -target simple_sdf_raylib_demo</code></pre>
+                </div>
+
+                <div class="feature-card">
+                    <h4>Vulkan (GPU)</h4>
+                    <p>GPU compute shaders. 63 FPS at 4K!</p>
+<pre><code>ec -batch -config simple_sdf.ecf \
+   -target simple_sdf_vulkan_demo</code></pre>
+                </div>
+            </div>
+
+            <h3>Running the Vulkan Demo</h3>
+<pre><code><span class="comment">-- Build and run</span>
+cd D:\prod\simple_sdf
+ec -batch -config simple_sdf.ecf -target simple_sdf_vulkan_demo -finalize -c_compile
+EIFGENs\simple_sdf_vulkan_demo\F_code\simple_sdf.exe</code></pre>
+
+            <h3>Controls</h3>
+            <table class="api-table">
+                <tr>
+                    <th>Key</th>
+                    <th>Action</th>
+                </tr>
+                <tr>
+                    <td>W/A/S/D</td>
+                    <td>Move camera forward/left/back/right</td>
+                </tr>
+                <tr>
+                    <td>Space/Ctrl</td>
+                    <td>Move camera up/down</td>
+                </tr>
+                <tr>
+                    <td>Arrow Keys</td>
+                    <td>Look around</td>
+                </tr>
+                <tr>
+                    <td>ESC</td>
+                    <td>Exit</td>
+                </tr>
+            </table>
+        </section>
+
+        <section id="ray-marching">
+            <h2>Ray Marching</h2>
+
+            <p>The ray marching algorithm renders SDF scenes by stepping along rays:</p>
+
+<pre><code><span class="comment">-- Ray march parameters</span>
+Max_steps: INTEGER = 100          <span class="comment">-- Maximum iterations</span>
+Max_distance: REAL_64 = 100.0     <span class="comment">-- Far plane</span>
+Surface_threshold: REAL_64 = 0.001 <span class="comment">-- Hit detection</span></code></pre>
+
+            <h3>GPU Compute Shader</h3>
+            <p>The Vulkan backend uses GLSL compute shaders for parallel ray marching:</p>
+
+<pre><code><span class="comment">#version 450</span>
+layout(local_size_x = 16, local_size_y = 16) in;
+
+<span class="comment">// Each thread renders one pixel</span>
+void main() {
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+
+    <span class="comment">// Calculate ray direction from camera</span>
+    vec3 rayDir = computeRayDir(pixel);
+
+    <span class="comment">// Ray march through scene</span>
+    float depth = 0.0;
+    for (int i = 0; i &lt; 100; i++) {
+        vec3 p = cameraPos + rayDir * depth;
+        float d = sceneSDF(p);
+        if (d &lt; 0.001) break;  <span class="comment">// Hit!</span>
+        depth += d;
+    }
+
+    <span class="comment">// Shade and output</span>
+    vec3 color = shade(p);
+    outputPixel(pixel, color);
+}</code></pre>
+        </section>
+
+        <section id="performance">
+            <h2>Performance</h2>
+
+            <p>Tested on NVIDIA GeForce RTX 5070 Ti:</p>
+            <table class="api-table">
+                <tr>
+                    <th>Backend</th>
+                    <th>Resolution</th>
+                    <th>FPS</th>
+                </tr>
+                <tr>
+                    <td>MiniFB (CPU)</td>
+                    <td>1920x1080</td>
+                    <td>30-40</td>
+                </tr>
+                <tr>
+                    <td>Vulkan (GPU)</td>
+                    <td>1920x1080</td>
+                    <td>63</td>
+                </tr>
+                <tr>
+                    <td>Vulkan (GPU)</td>
+                    <td>3840x2160 (4K)</td>
+                    <td>63</td>
+                </tr>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 simple_* ecosystem. MIT License.</p>
+        <p>
+            <a href="https://github.com/simple-eiffel/simple_sdf">GitHub</a> |
+            <a href="https://simple-eiffel.github.io">Documentation</a>
+        </p>
+    </footer>
+</body>
+</html>
