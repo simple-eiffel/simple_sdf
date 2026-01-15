@@ -1,3 +1,15 @@
 EIFGENs/
 *.obj
 *.lib
+*.exe
+*.dll
+
+# Build outputs
+bin/
+
+# Media assets (large files)
+media/
+
+# Logs
+exception_trace.log
+*.log
