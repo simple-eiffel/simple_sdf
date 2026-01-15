@@ -18,11 +18,37 @@ Part of the [Simple Eiffel](https://github.com/simple-eiffel) ecosystem.
 
 **Production** - GPU-accelerated via Vulkan, 63 FPS at 4K resolution
 
+## Inspiration
+
+This library was inspired by watching [Art of Code's SDF tutorial](https://youtu.be/il-TXbn5iMA?si=owhsmvIj-CFQx1F5) at 9 AM one morning. By 1 PM that same day, we had a fully working `simple_vulkan` and `simple_sdf` library with complete demo applications - including a procedural Medieval Village rendered in real-time at 63 FPS.
+
+The power of Eiffel's Design by Contract combined with GPU compute shaders makes complex graphics programming accessible and reliable.
+
 ## Overview
 
 SIMPLE_SDF provides a comprehensive toolkit for working with Signed Distance Fields in Eiffel. Create procedural geometry, perform CSG operations, and render with real-time ray marching on CPU or GPU.
 
 ## Quick Start
+
+### One-Liner API (SDF_QUICK)
+
+```eiffel
+local
+    sdf: SDF_QUICK
+do
+    -- That's it! One line to create, one line to run.
+    create sdf.make_village ("Medieval Village", 1920, 1080)
+    sdf.run
+end
+```
+
+This 4-line demo gives you a full procedural Medieval Village with:
+- Interactive camera (WASD + arrows)
+- 63 FPS GPU rendering via Vulkan
+- Screenshots (F12) and pause (P)
+- Built-in controls display
+
+### Core Library API
 
 ```eiffel
 local
@@ -96,11 +122,17 @@ filleted := sdf.smooth_difference (a, b, 0.1)
 Run the demos to see SDF rendering in action:
 
 ```batch
-# CPU rendering (MiniFB)
-ec -batch -config simple_sdf.ecf -target simple_sdf_minifb_demo -finalize -c_compile
+# SDF_QUICK One-Liner Demo (recommended)
+ec -batch -config simple_sdf.ecf -target simple_sdf_quick_demo -c_compile
 
-# GPU rendering (Vulkan) - 63 FPS at 4K!
-ec -batch -config simple_sdf.ecf -target simple_sdf_vulkan_demo -finalize -c_compile
+# Medieval Village Demo - Full procedural scene
+ec -batch -config simple_sdf.ecf -target simple_sdf_village_demo -c_compile
+
+# Basic GPU demo (Vulkan) - 63 FPS at 4K!
+ec -batch -config simple_sdf.ecf -target simple_sdf_vulkan_demo -c_compile
+
+# CPU rendering (MiniFB) - For systems without Vulkan
+ec -batch -config simple_sdf.ecf -target simple_sdf_minifb_demo -c_compile
 ```
 
 ### Demo Controls
@@ -110,7 +142,23 @@ ec -batch -config simple_sdf.ecf -target simple_sdf_vulkan_demo -finalize -c_com
 | WASD | Move camera |
 | Space/Ctrl | Up/Down |
 | Arrow Keys | Look around |
+| P | Pause/Resume |
+| F12 | Screenshot (BMP) |
 | ESC | Exit |
+
+## Medieval Village Demo
+
+The village demo showcases complex procedural SDF scene construction:
+
+- Half-timbered houses with pitched roofs
+- Stone church with steeple
+- Watchtower
+- Village well with stone rim
+- Trees with foliage
+- Cobblestone ground texture
+- Perimeter walls
+
+All geometry is defined mathematically using SDF primitives and boolean operations - no 3D models required!
 
 ## Performance
 

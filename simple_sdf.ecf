@@ -20,6 +20,7 @@
 				<exclude>/.svn$</exclude>
 				<exclude>/EIFGENs$</exclude>
 				<exclude>/visualization$</exclude>
+				<exclude>/quick$</exclude>
 			</file_rule>
 		</cluster>
 	</target>
@@ -196,10 +197,46 @@
 				<platform value="windows"/>
 			</condition>
 		</external_library>
+		<cluster name="quick" location=".\src\quick\" recursive="true"/>
 		<cluster name="visualization_minifb_village" location=".\src\visualization\minifb\" recursive="true"/>
 		<cluster name="demo_village" location=".\demo\">
 			<file_rule>
 				<include>/sdf_village_demo.e$</include>
+			</file_rule>
+		</cluster>
+	</target>
+	<target name="simple_sdf_quick_demo" extends="simple_sdf">
+		<description>SDF_QUICK Demo - Simplified one-liner API for GPU visualization</description>
+		<root class="SDF_QUICK_DEMO" feature="make"/>
+		<library name="simple_vulkan" location="$SIMPLE_EIFFEL\simple_vulkan\simple_vulkan.ecf"/>
+		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb"/>
+		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb\windows"/>
+		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb\gl"/>
+		<external_object location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb\minifb.lib">
+			<condition>
+				<platform value="windows"/>
+			</condition>
+		</external_object>
+		<external_library location="gdi32.lib">
+			<condition>
+				<platform value="windows"/>
+			</condition>
+		</external_library>
+		<external_library location="opengl32.lib">
+			<condition>
+				<platform value="windows"/>
+			</condition>
+		</external_library>
+		<external_library location="winmm.lib">
+			<condition>
+				<platform value="windows"/>
+			</condition>
+		</external_library>
+		<cluster name="quick" location=".\src\quick\" recursive="true"/>
+		<cluster name="visualization_minifb_quick" location=".\src\visualization\minifb\" recursive="true"/>
+		<cluster name="demo_quick" location=".\demo\">
+			<file_rule>
+				<include>/sdf_quick_demo.e$</include>
 			</file_rule>
 		</cluster>
 	</target>
