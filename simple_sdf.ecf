@@ -174,6 +174,7 @@
 		<description>Medieval Village Demo - GPU ray marching showcasing complex SDF scene</description>
 		<root class="SDF_VILLAGE_DEMO" feature="make"/>
 		<library name="simple_vulkan" location="$SIMPLE_EIFFEL\simple_vulkan\simple_vulkan.ecf"/>
+		<library name="simple_ffmpeg" location="$SIMPLE_EIFFEL\simple_ffmpeg\simple_ffmpeg.ecf"/>
 		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb"/>
 		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb\windows"/>
 		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb\gl"/>
@@ -209,6 +210,7 @@
 		<description>SDF_QUICK Demo - Simplified one-liner API for GPU visualization</description>
 		<root class="SDF_QUICK_DEMO" feature="make"/>
 		<library name="simple_vulkan" location="$SIMPLE_EIFFEL\simple_vulkan\simple_vulkan.ecf"/>
+		<library name="simple_ffmpeg" location="$SIMPLE_EIFFEL\simple_ffmpeg\simple_ffmpeg.ecf"/>
 		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb"/>
 		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb\windows"/>
 		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb\gl"/>

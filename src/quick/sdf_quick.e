@@ -32,7 +32,12 @@ note
 
 		SCREENSHOTS:
 			sdf.screenshot ("frame.bmp")              -- Save frame
-			sdf.start_recording ("frames/")           -- Record all frames
+
+		VIDEO RECORDING:
+			sdf.start_recording ("frames/")           -- Start capturing
+			-- ... run for a while ...
+			sdf.stop_recording                        -- Stop capturing
+			sdf.finalize_video ("output.mp4")         -- Create MP4 (requires ffmpeg.exe)
 
 		CALLBACKS:
 			sdf.set_on_frame (agent my_update)        -- Per-frame logic
@@ -41,6 +46,7 @@ note
 			WASD, Space/Ctrl    - Move
 			Arrows              - Look
 			P                   - Pause
+			R                   - Toggle recording
 			F12                 - Screenshot
 			ESC                 - Exit
 	]"
@@ -174,16 +180,70 @@ feature -- Screenshots
 feature -- Recording
 
 	is_recording: BOOLEAN
+	recording_fps: INTEGER
+	recorded_frame_count: INTEGER do Result := recording_frame end
 
 	start_recording (a_dir: STRING)
 			-- Record frames to directory (frame_00001.bmp, ...).
+			-- Call stop_recording then finalize_video to create MP4.
 		require
 			not_empty: not a_dir.is_empty
 		do
-			recording_dir := a_dir; recording_frame := 0; is_recording := True
+			recording_dir := a_dir
+			recording_frame := 0
+			recording_fps := 60
+			is_recording := True
+			print ("Recording started to: " + a_dir + "%N")
 		end
 
-	stop_recording do is_recording := False end
+	start_recording_at_fps (a_dir: STRING; a_fps: INTEGER)
+			-- Record at specific FPS.
+		require
+			not_empty: not a_dir.is_empty
+			valid_fps: a_fps > 0
+		do
+			recording_dir := a_dir
+			recording_frame := 0
+			recording_fps := a_fps
+			is_recording := True
+			print ("Recording started at " + a_fps.out + " FPS to: " + a_dir + "%N")
+		end
+
+	stop_recording
+			-- Stop recording frames.
+		do
+			is_recording := False
+			print ("Recording stopped. " + recording_frame.out + " frames captured.%N")
+		end
+
+	finalize_video (a_output: STRING): BOOLEAN
+			-- Convert recorded frames to MP4 video.
+			-- Call after stop_recording.
+		require
+			not_recording: not is_recording
+			output_not_empty: not a_output.is_empty
+			frames_exist: recorded_frame_count > 0
+		local
+			ffmpeg: SIMPLE_FFMPEG
+			pattern: STRING
+		do
+			create ffmpeg.make
+			if ffmpeg.is_available then
+				pattern := recording_dir + "/frame_" + "%%05d.bmp"
+				print ("Creating video: " + a_output + " (" + recording_frame.out + " frames at " + recording_fps.out + " FPS)%N")
+				Result := ffmpeg.images_to_video (pattern, a_output, recording_fps)
+				if Result then
+					print ("Video created successfully: " + a_output + "%N")
+				else
+					print ("Video creation failed%N")
+					if attached ffmpeg.last_error as err then
+						print ("Error: " + err + "%N")
+					end
+				end
+			else
+				print ("FFmpeg not available - install ffmpeg.exe to create videos%N")
+			end
+		end
 
 feature -- Callbacks
 
@@ -198,7 +258,7 @@ feature -- Execution
 			if is_ready then
 				print ("GPU: " + gpu_name + "%N")
 				print ("Resolution: " + width.out + "x" + height.out + "%N")
-				print ("Controls: WASD=move, Arrows=look, P=pause, F12=screenshot, ESC=exit%N%N")
+				print ("Controls: WASD=move, Arrows=look, P=pause, R=record, F12=screenshot, ESC=exit%N%N")
 				render_loop
 				cleanup
 			else
@@ -353,6 +413,7 @@ feature {NONE} -- Implementation
 				if w.is_key_down (w.Key_down) then camera_pitch := (camera_pitch - look_speed).max (-1.5) end
 			end
 			key_toggle (w, 80, agent toggle_pause)  -- P
+			key_toggle (w, 82, agent toggle_recording)  -- R
 			key_toggle (w, 301, agent auto_screenshot)  -- F12
 		end
 
@@ -368,6 +429,20 @@ feature {NONE} -- Implementation
 		end
 
 	auto_screenshot do screenshot ("screenshot_" + pad (frame_count, 6) + ".bmp") end
+
+	toggle_recording
+			-- Toggle video recording on/off.
+		do
+			if is_recording then
+				stop_recording
+				-- Auto-finalize if we have frames
+				if recording_frame > 0 then
+					finalize_video ("recording_" + pad (frame_count, 6) + ".mp4").do_nothing
+				end
+			else
+				start_recording ("recording_frames")
+			end
+		end
 
 	pad (n, w: INTEGER): STRING
 		do
