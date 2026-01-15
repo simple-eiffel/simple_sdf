@@ -36,17 +36,19 @@ SIMPLE_SDF provides a comprehensive toolkit for working with Signed Distance Fie
 local
     sdf: SDF_QUICK
 do
-    -- That's it! One line to create, one line to run.
-    create sdf.make_village ("Medieval Village", 1920, 1080)
+    -- Provide your shader, SDF_QUICK handles everything else
+    create sdf.make_with_shader ("My Scene", 1920, 1080, "my_shader.spv")
+    sdf.set_camera (0, 5, 20)
     sdf.run
 end
 ```
 
-This 4-line demo gives you a full procedural Medieval Village with:
+SDF_QUICK gives you:
 - Interactive camera (WASD + arrows)
 - 63 FPS GPU rendering via Vulkan
 - Screenshots (F12) and pause (P)
-- Built-in controls display
+- Orbit camera mode, time control, recording
+- Built-in controls - you just write the shader
 
 ### Core Library API
 

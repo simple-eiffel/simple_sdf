@@ -2,22 +2,24 @@ note
 	description: "[
 		SDF_QUICK - 80% of SDF power with 20% of code.
 
-		GPU-accelerated 3D visualization in just a few lines. Handles Vulkan,
-		windowing, camera, screenshots, recording, and animation automatically.
+		Generic GPU-accelerated 3D visualization. Handles Vulkan, windowing,
+		camera, screenshots, recording, and animation automatically.
+		You provide the shader - SDF_QUICK handles everything else.
 
-		MINIMAL EXAMPLE (3 lines of real code):
+		MINIMAL EXAMPLE:
 			class MY_APP create make feature
 				make
 					local sdf: SDF_QUICK
 					do
-						create sdf.make_village_1080p ("Village")
+						create sdf.make_with_shader ("My Scene", 1920, 1080, "my_shader.spv")
+						sdf.set_camera (0, 5, 20)
 						sdf.run
 					end
 			end
 
-		RESOLUTION PRESETS:
-			make_720p, make_1080p, make_4k              -- Basic scene
-			make_village_720p, make_village_1080p      -- Village scene
+		CREATION:
+			make_with_shader (title, width, height, shader_path)  -- Any shader
+			make / make_720p / make_1080p / make_4k               -- Default shader
 
 		CAMERA:
 			sdf.set_camera (x, y, z)                   -- Position
@@ -50,35 +52,25 @@ class
 	SDF_QUICK
 
 create
-	make, make_720p, make_1080p, make_4k,
-	make_village, make_village_720p, make_village_1080p, make_village_4k,
-	make_with_shader
+	make, make_720p, make_1080p, make_4k, make_with_shader
 
 feature {NONE} -- Initialization
 
 	make (a_title: STRING; a_width, a_height: INTEGER)
+			-- Create with default shader.
 		require
 			title_not_empty: not a_title.is_empty
 			valid_size: a_width > 0 and a_height > 0
 		do
-			initialize (a_title, a_width, a_height, Shader_basic)
+			initialize (a_title, a_width, a_height, Default_shader)
 		end
 
-	make_720p (a_title: STRING) do initialize (a_title, 1280, 720, Shader_basic) end
-	make_1080p (a_title: STRING) do initialize (a_title, 1920, 1080, Shader_basic) end
-	make_4k (a_title: STRING) do initialize (a_title, 3840, 2160, Shader_basic) end
-
-	make_village (a_title: STRING; a_width, a_height: INTEGER)
-		do
-			initialize (a_title, a_width, a_height, Shader_village)
-			set_camera (0.0, 5.0, 35.0)
-		end
-
-	make_village_720p (a_title: STRING) do make_village (a_title, 1280, 720) end
-	make_village_1080p (a_title: STRING) do make_village (a_title, 1920, 1080) end
-	make_village_4k (a_title: STRING) do make_village (a_title, 3840, 2160) end
+	make_720p (a_title: STRING) do initialize (a_title, 1280, 720, Default_shader) end
+	make_1080p (a_title: STRING) do initialize (a_title, 1920, 1080, Default_shader) end
+	make_4k (a_title: STRING) do initialize (a_title, 3840, 2160, Default_shader) end
 
 	make_with_shader (a_title: STRING; a_width, a_height: INTEGER; a_shader: STRING)
+			-- Create with custom shader (path relative to $SIMPLE_EIFFEL/simple_vulkan/shaders/).
 		require
 			valid: not a_title.is_empty and a_width > 0 and a_height > 0 and not a_shader.is_empty
 		do
@@ -216,10 +208,10 @@ feature -- Execution
 
 	stop do running := False end
 
-feature -- Shader Constants
+feature -- Constants
 
-	Shader_basic: STRING = "sdf_buffer_output.spv"
-	Shader_village: STRING = "medieval_village.spv"
+	Default_shader: STRING = "sdf_buffer_output.spv"
+			-- Default shader used when no custom shader specified.
 
 feature {NONE} -- Implementation
 

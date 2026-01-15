@@ -42,8 +42,12 @@ feature -- Initialization
 			print ("Medieval Village Demo%N")
 			print ("=====================%N%N")
 
-			-- One-liner API: create and run
-			create sdf.make_village ("Medieval Village", 1920, 1080)
+			-- Use SDF_QUICK with the village shader
+			create sdf.make_with_shader ("Medieval Village", 1920, 1080, "medieval_village.spv")
+
+			-- Position camera outside village looking in
+			sdf.set_camera (0.0, 5.0, 35.0)
+
 			sdf.run
 		end
 

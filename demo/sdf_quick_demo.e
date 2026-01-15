@@ -2,8 +2,8 @@ note
 	description: "[
 		Simple demo showing SDF_QUICK usage.
 
-		This entire file is ~20 lines vs. the 360-line full demo.
 		SDF_QUICK handles all Vulkan, windowing, camera controls, and cleanup.
+		You just provide a shader and run.
 	]"
 
 class
@@ -15,15 +15,15 @@ create
 feature
 
 	make
-			-- Run demo with one-liner API.
+			-- Run demo with SDF_QUICK.
 		local
 			sdf: SDF_QUICK
 		do
 			print ("SDF_QUICK Demo%N")
 			print ("==============%N%N")
 
-			-- That's it! One line to create, one line to run.
-			create sdf.make_village ("Medieval Village", 1920, 1080)
+			-- Create with default shader and run
+			create sdf.make_1080p ("SDF Quick Demo")
 			sdf.run
 		end
 
