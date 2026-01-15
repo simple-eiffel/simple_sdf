@@ -19,8 +19,8 @@
 				<exclude>/.git$</exclude>
 				<exclude>/.svn$</exclude>
 				<exclude>/EIFGENs$</exclude>
-				<exclude>/visualization$</exclude>
 				<exclude>/quick$</exclude>
+				<exclude>/visualization$</exclude>
 			</file_rule>
 		</cluster>
 	</target>
@@ -57,12 +57,12 @@
 				<platform value="windows"/>
 			</condition>
 		</external_library>
-		<cluster name="visualization_minifb" location=".\src\visualization\minifb\" recursive="true"/>
 		<cluster name="demo_minifb" location=".\demo\">
 			<file_rule>
 				<include>/sdf_minifb_demo.e$</include>
 			</file_rule>
 		</cluster>
+		<cluster name="visualization_minifb" location=".\src\visualization\minifb\" recursive="true"/>
 	</target>
 	<target name="simple_sdf_raylib_demo" extends="simple_sdf">
 		<description>SDF visualization demo using raylib (GPU-accelerated texture)</description>
@@ -93,12 +93,12 @@
 				<platform value="windows"/>
 			</condition>
 		</external_library>
-		<cluster name="visualization_raylib" location=".\src\visualization\raylib\" recursive="true"/>
 		<cluster name="demo_raylib" location=".\demo\">
 			<file_rule>
 				<include>/sdf_raylib_demo.e$</include>
 			</file_rule>
 		</cluster>
+		<cluster name="visualization_raylib" location=".\src\visualization\raylib\" recursive="true"/>
 	</target>
 	<target name="simple_sdf_gpu_demo" extends="simple_sdf">
 		<description>SDF GPU visualization demo using raylib shaders (4K capable)</description>
@@ -129,17 +129,16 @@
 				<platform value="windows"/>
 			</condition>
 		</external_library>
-		<cluster name="visualization_raylib" location=".\src\visualization\raylib\" recursive="true"/>
 		<cluster name="demo_gpu" location=".\demo\">
 			<file_rule>
 				<include>/sdf_gpu_demo.e$</include>
 			</file_rule>
 		</cluster>
+		<cluster name="visualization_raylib" location=".\src\visualization\raylib\" recursive="true"/>
 	</target>
 	<target name="simple_sdf_vulkan_demo" extends="simple_sdf">
 		<description>SDF Vulkan compute demo (GPU ray marching on NVIDIA/AMD/Intel)</description>
 		<root class="SDF_VULKAN_DEMO" feature="make"/>
-		<library name="simple_vulkan" location="$SIMPLE_EIFFEL\simple_vulkan\simple_vulkan.ecf"/>
 		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb"/>
 		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb\windows"/>
 		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb\gl"/>
@@ -163,18 +162,18 @@
 				<platform value="windows"/>
 			</condition>
 		</external_library>
-		<cluster name="visualization_minifb_vulkan" location=".\src\visualization\minifb\" recursive="true"/>
+		<library name="simple_vulkan" location="$SIMPLE_EIFFEL\simple_vulkan\simple_vulkan.ecf"/>
 		<cluster name="demo_vulkan" location=".\demo\">
 			<file_rule>
 				<include>/sdf_vulkan_demo.e$</include>
 			</file_rule>
 		</cluster>
+		<cluster name="visualization_minifb_vulkan" location=".\src\visualization\minifb\" recursive="true"/>
 	</target>
 	<target name="simple_sdf_village_demo" extends="simple_sdf">
 		<description>Medieval Village Demo - GPU ray marching showcasing complex SDF scene</description>
 		<root class="SDF_VILLAGE_DEMO" feature="make"/>
-		<library name="simple_vulkan" location="$SIMPLE_EIFFEL\simple_vulkan\simple_vulkan.ecf"/>
-		<library name="simple_ffmpeg" location="$SIMPLE_EIFFEL\simple_ffmpeg\simple_ffmpeg.ecf"/>
+		<setting name="console_application" value="false"/>
 		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb"/>
 		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb\windows"/>
 		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb\gl"/>
@@ -198,19 +197,18 @@
 				<platform value="windows"/>
 			</condition>
 		</external_library>
-		<cluster name="quick" location=".\src\quick\" recursive="true"/>
-		<cluster name="visualization_minifb_village" location=".\src\visualization\minifb\" recursive="true"/>
+		<library name="simple_vulkan" location="$SIMPLE_EIFFEL\simple_vulkan\simple_vulkan.ecf"/>
 		<cluster name="demo_village" location=".\demo\">
 			<file_rule>
 				<include>/sdf_village_demo.e$</include>
 			</file_rule>
 		</cluster>
+		<cluster name="quick" location=".\src\quick\" recursive="true"/>
+		<cluster name="visualization_minifb_village" location=".\src\visualization\minifb\" recursive="true"/>
 	</target>
 	<target name="simple_sdf_quick_demo" extends="simple_sdf">
 		<description>SDF_QUICK Demo - Simplified one-liner API for GPU visualization</description>
 		<root class="SDF_QUICK_DEMO" feature="make"/>
-		<library name="simple_vulkan" location="$SIMPLE_EIFFEL\simple_vulkan\simple_vulkan.ecf"/>
-		<library name="simple_ffmpeg" location="$SIMPLE_EIFFEL\simple_ffmpeg\simple_ffmpeg.ecf"/>
 		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb"/>
 		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb\windows"/>
 		<external_include location="$SIMPLE_EIFFEL\simple_sdf\Clib\minifb\gl"/>
@@ -234,12 +232,13 @@
 				<platform value="windows"/>
 			</condition>
 		</external_library>
-		<cluster name="quick" location=".\src\quick\" recursive="true"/>
-		<cluster name="visualization_minifb_quick" location=".\src\visualization\minifb\" recursive="true"/>
+		<library name="simple_vulkan" location="$SIMPLE_EIFFEL\simple_vulkan\simple_vulkan.ecf"/>
 		<cluster name="demo_quick" location=".\demo\">
 			<file_rule>
 				<include>/sdf_quick_demo.e$</include>
 			</file_rule>
 		</cluster>
+		<cluster name="quick" location=".\src\quick\" recursive="true"/>
+		<cluster name="visualization_minifb_quick" location=".\src\visualization\minifb\" recursive="true"/>
 	</target>
 </system>

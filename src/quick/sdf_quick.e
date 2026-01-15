@@ -3,7 +3,7 @@ note
 		SDF_QUICK - 80% of SDF power with 20% of code.
 
 		Generic GPU-accelerated 3D visualization. Handles Vulkan, windowing,
-		camera, screenshots, recording, and animation automatically.
+		camera, screenshots, and animation automatically.
 		You provide the shader - SDF_QUICK handles everything else.
 
 		MINIMAL EXAMPLE:
@@ -31,13 +31,7 @@ note
 			sdf.set_time_scale (0.5)                   -- Slow motion
 
 		SCREENSHOTS:
-			sdf.screenshot ("frame.bmp")              -- Save frame
-
-		VIDEO RECORDING:
-			sdf.start_recording ("frames/")           -- Start capturing
-			-- ... run for a while ...
-			sdf.stop_recording                        -- Stop capturing
-			sdf.finalize_video ("output.mp4")         -- Create MP4 (requires ffmpeg.exe)
+			sdf.screenshot ("frame.bmp")              -- Save frame (F12 key)
 
 		CALLBACKS:
 			sdf.set_on_frame (agent my_update)        -- Per-frame logic
@@ -46,7 +40,6 @@ note
 			WASD, Space/Ctrl    - Move
 			Arrows              - Look
 			P                   - Pause
-			R                   - Toggle recording
 			F12                 - Screenshot
 			ESC                 - Exit
 	]"
@@ -177,74 +170,6 @@ feature -- Screenshots
 			screenshot_path := a_path
 		end
 
-feature -- Recording
-
-	is_recording: BOOLEAN
-	recording_fps: INTEGER
-	recorded_frame_count: INTEGER do Result := recording_frame end
-
-	start_recording (a_dir: STRING)
-			-- Record frames to directory (frame_00001.bmp, ...).
-			-- Call stop_recording then finalize_video to create MP4.
-		require
-			not_empty: not a_dir.is_empty
-		do
-			recording_dir := a_dir
-			recording_frame := 0
-			recording_fps := 60
-			is_recording := True
-			print ("Recording started to: " + a_dir + "%N")
-		end
-
-	start_recording_at_fps (a_dir: STRING; a_fps: INTEGER)
-			-- Record at specific FPS.
-		require
-			not_empty: not a_dir.is_empty
-			valid_fps: a_fps > 0
-		do
-			recording_dir := a_dir
-			recording_frame := 0
-			recording_fps := a_fps
-			is_recording := True
-			print ("Recording started at " + a_fps.out + " FPS to: " + a_dir + "%N")
-		end
-
-	stop_recording
-			-- Stop recording frames.
-		do
-			is_recording := False
-			print ("Recording stopped. " + recording_frame.out + " frames captured.%N")
-		end
-
-	finalize_video (a_output: STRING): BOOLEAN
-			-- Convert recorded frames to MP4 video.
-			-- Call after stop_recording.
-		require
-			not_recording: not is_recording
-			output_not_empty: not a_output.is_empty
-			frames_exist: recorded_frame_count > 0
-		local
-			ffmpeg: SIMPLE_FFMPEG
-			pattern: STRING
-		do
-			create ffmpeg.make
-			if ffmpeg.is_available then
-				pattern := recording_dir + "/frame_" + "%%05d.bmp"
-				print ("Creating video: " + a_output + " (" + recording_frame.out + " frames at " + recording_fps.out + " FPS)%N")
-				Result := ffmpeg.images_to_video (pattern, a_output, recording_fps)
-				if Result then
-					print ("Video created successfully: " + a_output + "%N")
-				else
-					print ("Video creation failed%N")
-					if attached ffmpeg.last_error as err then
-						print ("Error: " + err + "%N")
-					end
-				end
-			else
-				print ("FFmpeg not available - install ffmpeg.exe to create videos%N")
-			end
-		end
-
 feature -- Callbacks
 
 	on_frame: detachable PROCEDURE [REAL]
@@ -258,7 +183,7 @@ feature -- Execution
 			if is_ready then
 				print ("GPU: " + gpu_name + "%N")
 				print ("Resolution: " + width.out + "x" + height.out + "%N")
-				print ("Controls: WASD=move, Arrows=look, P=pause, R=record, F12=screenshot, ESC=exit%N%N")
+				print ("Controls: WASD=move, Arrows=look, P=pause, F12=screenshot, ESC=exit%N%N")
 				render_loop
 				cleanup
 			else
@@ -276,8 +201,7 @@ feature -- Constants
 feature {NONE} -- Implementation
 
 	running, screenshot_pending: BOOLEAN
-	screenshot_path, recording_dir: STRING
-	recording_frame: INTEGER
+	screenshot_path: STRING
 
 	vk: detachable SIMPLE_VULKAN
 	ctx: detachable VULKAN_CONTEXT
@@ -297,7 +221,7 @@ feature {NONE} -- Implementation
 			title := a_title; width := a_w; height := a_h; is_ready := False
 			camera_x := 0; camera_y := 2; camera_z := 8; camera_pitch := -0.1
 			move_speed := 0.3; look_speed := 0.03; time_scale := 1.0
-			screenshot_path := ""; recording_dir := ""
+			screenshot_path := ""
 
 			create l_vk; vk := l_vk; l_ctx := l_vk.create_context; ctx := l_ctx
 			if l_ctx.is_valid then
@@ -378,10 +302,6 @@ feature {NONE} -- Implementation
 						save_bmp (pixels, screenshot_path); screenshot_pending := False
 						print ("Saved: " + screenshot_path + "%N")
 					end
-					if is_recording then
-						recording_frame := recording_frame + 1
-						save_bmp (pixels, recording_dir + "frame_" + pad (recording_frame, 5) + ".bmp")
-					end
 
 					lb.copy_from (pixels.item, width * height * 4); lw.update (lb).do_nothing
 
@@ -413,7 +333,6 @@ feature {NONE} -- Implementation
 				if w.is_key_down (w.Key_down) then camera_pitch := (camera_pitch - look_speed).max (-1.5) end
 			end
 			key_toggle (w, 80, agent toggle_pause)  -- P
-			key_toggle (w, 82, agent toggle_recording)  -- R
 			key_toggle (w, 301, agent auto_screenshot)  -- F12
 		end
 
@@ -429,20 +348,6 @@ feature {NONE} -- Implementation
 		end
 
 	auto_screenshot do screenshot ("screenshot_" + pad (frame_count, 6) + ".bmp") end
-
-	toggle_recording
-			-- Toggle video recording on/off.
-		do
-			if is_recording then
-				stop_recording
-				-- Auto-finalize if we have frames
-				if recording_frame > 0 then
-					finalize_video ("recording_" + pad (frame_count, 6) + ".mp4").do_nothing
-				end
-			else
-				start_recording ("recording_frames")
-			end
-		end
 
 	pad (n, w: INTEGER): STRING
 		do
