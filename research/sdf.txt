@@ -1,0 +1,1002 @@
+
+208,264 views  Jan 6, 2026
+My motivation when starting this project was to build an engine that enables high fidelity modifications to world geometry during gameplay. In most games, the game world is relatively static. In the games where geometry is dynamic - like Minecraft or No Man's Sky - modifications to the world are usually relatively crude and low-fidelity. 
+
+My engine supports detailed changes to world geometry - adding and removing matter both smoothly or with sharp edges. It also supports non-destructive changes like moving a hole around, or creating a tunnel and walking through it - and then seeing it disappear behind you. I'm excited about these non-destructive changes in particular as they enable a lot of interesting gameplay mechanics.
+
+I've started building a game with this engine, which I will be saying more about as I make more progress.
+
+I post frequent updates on Twitter: https://x.com/miketuritzin
+And also on Bluesky: https://bsky.app/profile/miketuritzin...
+
+Resources:
+
+Video intro to SDFs and ray-marching by Sebastian Lague:    • Coding Adventure: Ray Marching  
+Inigo Quilez's articles (many on SDFs): https://iquilezles.org/articles/
+"SDF Tracing Visualization" Shadertoy (paniq): https://www.shadertoy.com/view/lslXD8
+"Improved Alpha-Tested Magnification for Vector Textures and Special Effects" (Chris Green (Valve), 2007): https://steamcdn-a.akamaihd.net/apps/...
+"Ray Tracing of Signed Distance Function Grids" (Söderlund et al (NVIDIA), 2022): https://jcgt.org/published/0011/03/06...
+"Geometry Clipmaps: Terrain Rendering Using Nested Regular Grids" (Losasso & Hoppe, 2004): https://hhoppe.com/geomclipmap.pdf
+Jolt Physics: https://github.com/jrouwe/JoltPhysics
+
+
+
+Intro reel and motivation
+0:00
+Hi, I'm Mike and I've been working for
+0:02
+quite some time now on a game engine
+0:04
+based on signed distance fields. I
+0:07
+created this video to show what the
+0:09
+engine can do and explain how it works.
+0:12
+I've started building a game with this
+0:13
+engine as well, which I'll say a little
+0:15
+more about later. My motivation when
+0:18
+starting this project was to build an
+0:20
+engine that enables highfidelity
+0:21
+modifications to world geometry during
+0:24
+game play. In most games, the game world
+0:27
+is relatively static. In the games where
+0:30
+geometry is dynamic, like Minecraft or
+0:32
+No Man's Sky, modifications to the world
+0:35
+are usually relatively crude and low
+0:38
+fidelity. My engine supports detailed
+0:40
+changes to world geometry, adding and
+0:43
+removing matter, both smoothly or with
+0:45
+sharp edges. It also supports
+0:47
+non-destructive changes like moving a
+0:50
+hole around or creating a tunnel and
+0:52
+walking through it and then seeing it
+0:54
+disappear behind you. I'm excited about
+0:57
+these non-destructive changes in
+0:58
+particular as they enable a lot of
+1:00
+interesting gameplay mechanics. The
+Short intro to SDFs
+1:03
+underlying technology that enables all
+1:05
+of this uses sign distance fields or
+1:07
+SDFs.
+1:09
+SDFs are cool for many reasons, but a
+1:11
+big one is that they enable very simple
+1:14
+geometric boolean operations between
+1:16
+shapes like union, subtraction, and
+1:19
+intersection. These operations can also
+1:21
+be smoothed which creates nicel looking
+1:24
+blends between shapes and removes hard
+1:26
+edges. I'm not going to give a full
+1:29
+introduction to SDFs in this video as
+1:31
+that would take too long and the topic
+1:33
+has been covered very well in quite a
+1:35
+few other videos.
+1:37
+I recommend this short video by
+1:38
+Sebastian Log which covers how STFs are
+1:41
+defined mathematically and how they're
+1:44
+typically rendered via ray margin. I've
+1:46
+included a link in the description. The
+1:49
+best sources on the web for SDF related
+1:51
+techniques are Shader Toy and Inigo
+1:54
+Killes's website. In general, SDFs on
+Ray-marching perf problems
+1:57
+Shader Toy are rendered via ray
+1:59
+marching. While this technique is quick
+2:01
+to get started with and very powerful,
+2:04
+brute force ray marching degrades
+2:05
+performance very quickly as it typically
+2:08
+evaluates a complex mathematical
+2:10
+function many times per pixel. This is
+2:13
+how the rabbit hole I went down in
+2:14
+developing my engine started. I wanted
+2:17
+to fully represent the game world using
+2:19
+SDFs and to have that world be
+2:21
+dynamically modifiable, but also to
+2:24
+maintain high performance. And it turns
+2:27
+out that achieving this goal is far more
+2:29
+complex than typical ray marching
+2:31
+methods. My first inspiration was Dreams
+Inspiration: Dreams on PS4
+2:34
+for PlayStation 4. The game world, as
+2:36
+well as all 3D objects in Dreams, are
+2:39
+represented via SDFs that can be
+2:41
+sculpted in Dreams itself. Dreams is a
+2:44
+phenomenal achievement in technology and
+2:46
+design on many different levels.
+2:48
+My aim isn't to rebuild Dreams, and that
+2:51
+would be impossible for a solo developer
+2:53
+anyway. Instead, I set out to build an
+2:55
+engine based on SCFs, but where all
+2:58
+world geometry is dynamically
+3:00
+modifiable, which isn't possible in
+3:01
+Dreams. This requires a different set of
+3:04
+technical constraints, but also provides
+3:07
+different gameplay possibilities. Next,
+Background on my approach
+3:09
+I'm going to explain how I've made
+3:11
+rendering of SDFs in complex
+3:13
+environments fast enough for a game.
+3:16
+I've been inspired by many other works
+3:18
+here, including dreams, but my overall
+3:21
+approach is a fairly unique combination
+3:23
+of techniques. First, some background. A
+3:27
+scene in my engine is represented as an
+3:29
+ordered list of SDF edits, which is a
+3:32
+term I've borrowed from Dreams. You can
+3:34
+think of an SDF edit as a shape with a
+3:37
+position, rotation, and scale that's
+3:39
+applied to the world via a boolean
+3:41
+operation like union or subtraction. So
+3:44
+for example, a sphere that cuts a chunk
+3:46
+out of the world at a particular
+3:48
+position. The basic problem is that the
+3:50
+distance function for a complex scene is
+3:52
+expensive to evaluate and standard SDF
+3:55
+ray margin evaluates this function many
+3:57
+times per pixel. Culling can be used to
+4:00
+reduce the number of SDF edits that need
+4:02
+to be evaluated at a specific point, but
+4:05
+this still hits a performance wall for
+4:07
+complex scenes. It's easy to end up with
+4:10
+dozens or more of edits that influence a
+4:14
+particular point in space. When having
+Caching SDF distances
+4:16
+to repeatedly evaluate an expensive
+4:18
+function, a typical optimization is
+4:20
+caching. And that's what I do. Rather
+4:23
+than evaluating the scene's distance
+4:25
+function from scratch over and over
+4:27
+again, I evaluate the function for all
+4:29
+points on a grid once and then reuse
+4:32
+those cache values when rendering.
+4:34
+Consider this simple 2D scene where I'm
+4:36
+smoothly blending the SDFs of a circle
+4:39
+and a square. Regions with positive
+4:41
+distance, meaning they're outside the
+4:43
+curve, are shaded in orange, and regions
+4:45
+with negative distance, which are inside
+4:47
+the curve, are shaded in blue. The curve
+4:50
+itself is the white line drawn where the
+4:52
+distance is zero. As I move the mouse
+4:55
+around, the scene's distance function is
+4:57
+being continuously evaluated. The radius
+5:00
+of the circle that's drawn at the cursor
+5:01
+position is equal to the magnitude of
+5:04
+the resulting distance. Now, imagine
+5:06
+that we overlay a grid on the scene and
+5:08
+evaluate the scene distance function at
+5:10
+each grid point. Each grid point is
+5:13
+shaded corresponding to its calculated
+5:15
+distance. As I move the mouse around,
+5:18
+you can see the distances for the grid
+5:19
+points of each grid cell visualized.
+5:22
+Because the scene is changing every
+5:24
+frame, for now, we're still evaluating
+5:26
+the function for every grid point every
+5:28
+frame, but the number of grid points is
+5:30
+far lower than the number of screen
+5:32
+pixels. Of course, caching distances
+Interpolating cached values
+5:34
+evaluated on a grid is useless without
+5:37
+using these distances in some way. To
+5:40
+approximate the distance to the curve at
+5:42
+any point, we first determine which cell
+5:44
+the point is in and then gather the four
+5:46
+distances at the grid points of that
+5:49
+cell. We can then use bilinear
+5:51
+interpolation between these distances to
+5:54
+calculate the final distance estimate.
+5:56
+We first interpolate along the x-axis
+5:58
+and then interpolate the resulting
+6:00
+values along the y-axis. This
+6:03
+calculation can be done with a single
+6:05
+GPU texture fetch. Of course, the curve
+6:08
+that we reconstruct from these
+6:09
+interpolated distances doesn't exactly
+6:12
+match the original curve. Here, the
+6:14
+original curve is still a white line,
+6:16
+and I've added a yellow line
+6:18
+representing the reconstructed curve.
+6:20
+It's relatively accurate as long as the
+6:22
+curve is straight or close to straight
+6:24
+at the granularity of a grid cell. It's
+6:27
+pretty inaccurate near corners, and you
+6:29
+can see them wobbling as the square
+6:31
+moves.
+6:32
+If we increase the grid resolution, the
+6:35
+reconstructed curve gets more accurate.
+6:37
+This type of technique has been used in
+6:39
+games to render font glyphs with sharp
+6:41
+edges at any size for a couple decades
+6:44
+now. It was written about in this Valve
+6:46
+paper from 2007. In the case of text
+6:49
+rendering, typically the SCF for each
+6:51
+glyph is calculated and cached once as
+6:54
+you don't expect fonts to change during
+6:56
+game play. The previous animation showed
+6:58
+the corners of the square wobbling due
+7:00
+to the interpolation of sample
+7:02
+distances. This happens in 3D as well.
+7:05
+As you can see here in my engine as I
+7:07
+drag a cube around, the grid resolution
+7:10
+is intentionally very coarse for
+7:12
+demonstration purposes. It's oddly
+7:14
+satisfying just to drag a cube around
+7:16
+like this. I'll say more later about why
+7:19
+I'm not representing the SDF surface
+7:21
+with a triangle mesh. But one benefit of
+7:24
+rendering from a grid of cache distances
+7:26
+is that the reconstructed surface can
+7:28
+actually be quite complex, which means
+7:30
+the grid resolution can be lower. This
+7:33
+diagram is from an NVIDIA paper that
+7:35
+I've linked in the description. It shows
+7:38
+the type of 3D surfaces that can be
+7:40
+reconstructed from trilinear
+7:42
+interpolation of cache distances in a 3D
+7:45
+grid. These surfaces are curved and can
+7:47
+have complex topology. Now, you may be
+Memory usage woes
+7:50
+thinking that evaluating and storing a
+7:52
+grid of cache distances will be very
+7:54
+expensive for larger scenes. And you'd
+7:56
+be right. Even at a very coarse grid
+7:59
+resolution, you'll be running out of
+8:00
+memory very quickly. Let's do a bit of
+8:03
+math here. Cache distances can be stored
+8:06
+compactly. We don't need a full four
+8:08
+byte floating point value per distance.
+8:11
+We can get away with storing distances
+8:13
+as a single bite if we limit them to
+8:15
+cover the minimum required distance,
+8:18
+which is half the diagonal length of a
+8:20
+grid cell. As I'll discuss next, we only
+8:23
+care about the surface of the SDF. So
+8:26
+representing larger distances is not
+8:28
+particularly helpful. Now, even at just
+8:31
+one bite per cache distance value, a 3D
+8:34
+grid resolution of 1,024 cubed already
+8:37
+uses a gigabyte of memory. This doesn't
+8:40
+work unless you confine your game world
+8:41
+to a very small area. The solution to
+Caching distances sparsely
+8:44
+this problem is caching distances
+8:46
+sparsely. The previously described
+8:49
+approach caches distances densely over
+8:51
+the full grid. Since we're rendering the
+8:54
+surface of the SCF, we only actually
+8:56
+care about distances in cells that
+8:58
+contain the surface or specifically
+9:00
+cells with grid points that evaluate to
+9:02
+both positive and negative distances.
+9:05
+The diagram now shows only the grid
+9:08
+cells that contain the 2D curve. We only
+9:11
+need to cache distances for grid points
+9:13
+corresponding to these cells. Of course,
+Brick-map and brick atlas
+9:16
+storing a sparse grid is more complex
+9:18
+than storing a dense grid. A dense grid
+9:21
+can be stored in a buffer or texture
+9:23
+with easy access to any entry based on
+9:25
+its 2D or 3D index. For sparse grids,
+9:29
+oct trees are a common approach, but I
+9:31
+chose something simpler that works
+9:32
+particularly well on the GPU. A brick
+9:35
+map. A brick map is a dense grid of
+9:38
+pointers to bricks, which are
+9:40
+essentially small square or cubic
+9:42
+regions of the original cached distance
+9:45
+grid. In this diagram, each grid cell is
+9:48
+a 2x2 brick. Bricks are allocated from a
+9:51
+large texture atlas. As I mouse over
+9:54
+cells in the scene, you can see the
+9:56
+bricks in the texture atlas they
+9:58
+correspond to. And this is me flipping
+10:00
+through the slices of the 3D texture
+10:02
+atlas used for bricks in my engine. Each
+10:06
+pixel represents a single cache grid
+10:08
+point. Bricks are 8x 8x8, which was
+10:11
+inspired by Dreams and works well. With
+10:14
+this size of bricks, the brick map
+10:16
+pointer grid uses a relatively trivial
+10:19
+amount of space compared to the size of
+10:21
+the brick atlas. This is a small scene
+10:24
+in my engine with each of these sparsely
+10:26
+allocated distance bricks colored
+10:28
+differently. You can see the allocation
+10:30
+of bricks changing as I move the sphere
+10:32
+around. Some people watching this may be
+Why not a triangle mesh
+10:35
+wondering why I'm not generating a
+10:37
+triangle mesh from the distance field
+10:39
+using a technique like marching cubes or
+10:41
+dual contouring. The equivalent for this
+10:44
+2D example would be marching squares. A
+10:47
+mesh is cheap to render but is more
+10:49
+expensive to generate for a given level
+10:51
+of fidelity. Because my primary goal is
+10:54
+to have a highfidelity dynamic world, I
+10:57
+want to optimize for recomputation of
+10:59
+scene changes. It's okay if rendering
+11:02
+takes a bit of a performance hit as long
+11:04
+as the benefit to scene geometry
+11:06
+recomputation is large. Sparsely
+Supporting vast spaces
+11:09
+allocating bricks helps a lot in
+11:11
+reducing memory usage, but it's still
+11:13
+nowhere near good enough for large
+11:15
+scenes or an open world. I want my
+11:18
+engine in game to support vast spaces.
+11:21
+The usual solution to this in games is
+11:23
+level of detail or LOD. Geometry that's
+11:26
+further from the player is represented
+11:28
+at lower fidelity, which means it's both
+11:31
+cheaper to load and cheaper to render.
+11:33
+In my case, I'm not just loading
+11:35
+geometry, but evaluating the SCF at many
+11:38
+points. So, it's essential that it be
+11:40
+evaluated much less frequently further
+11:42
+from the camera. I use an approach
+Geometry clipmaps
+11:45
+inspired by geometry clip maps, which
+11:47
+were introduced in this paper from more
+11:49
+than 20 years ago. There's a lot of
+11:51
+stuff to get right in this type of
+11:53
+approach, but the high level is that
+11:55
+instead of using a single grid of brick
+11:57
+pointers, a set of grids are nested on
+11:59
+top of one another where each successive
+12:02
+grid is double the size and all
+12:03
+dimensions of the previous grid level.
+12:06
+All clip map levels are centered on the
+12:08
+player and follow the player's movement.
+12:10
+This naturally leads to evaluating the
+12:12
+SCF at a coarser resolution further from
+12:15
+the player, which ensures that the
+12:17
+on-screen size of cache bricks remains
+12:19
+relatively constant regardless of their
+12:22
+distance to the player. Here, each brick
+12:24
+is colored, and I've also turned on
+12:26
+colors that clearly delineate the clip
+12:28
+map levels. You can see how bricks
+12:30
+double in size at the transition to
+12:32
+farther clip map levels. Using clip map
+Dramatic memory reductions
+12:35
+levels dramatically decreases the memory
+12:38
+usage required for an open world. In
+12:41
+this scene, where the draw distance is
+12:43
+about 2.5 km, at the resolution that's
+12:46
+used nearest to the player, over 200
+12:49
+trillion brick map cells would be needed
+12:51
+for the full range. With the clip map,
+12:54
+only 20 million cells are needed, which
+12:56
+is a 10 millionfold reduction. One of
+Fast incremental updates
+12:59
+the main goals for my engine was to
+13:00
+enable fast updates to world geometry
+13:03
+during gameplay.
+13:04
+And the only way I could hope to achieve
+13:06
+this given the architecture I chose is
+13:09
+to incrementally regenerate just the
+13:11
+world regions that change. This is a
+13:14
+fairly deep rabbit hole on its own. So
+13:16
+I'll just explain some broad strokes.
+13:18
+All SDF edits are tracked spatially via
+13:21
+a bounding volume hierarchy or BVH.
+13:24
+Specifically, I use a tree of access
+13:27
+align bounding boxes which is common.
+13:29
+This data structure is shared between
+13:31
+the CPU and GPU. You can see the
+13:34
+structure of the tree dynamically
+13:36
+updating as I move an edit around here.
+13:38
+The AABB tree is useful for raycasts as
+13:42
+shown here where the SDF edits that are
+13:45
+tested for exact intersections are
+13:47
+highlighted as the ray sweeps across the
+13:50
+scene. Querying the tree also allows us
+13:52
+to know which SDF edits can affect a
+13:55
+region of space. This is used when
+13:57
+evaluating the SDF to do less work. It's
+14:00
+also used to determine which distance
+14:02
+bricks need to be re-evaluated when an
+14:05
+SDF edit is changed. Here I've turned on
+14:08
+a debug mode that colors the bricks that
+14:10
+are regenerated each frame. You can see
+14:13
+that the vast majority of the world is
+14:15
+reused frame to frame even when things
+14:18
+are changing. Note that this approach is
+14:20
+not technically mathematically correct
+14:22
+for reasons I won't go into here, but it
+14:24
+works well enough right now for the
+14:26
+types of interactions that are possible
+14:27
+in my engine. So, I've built this SDF
+Physics and collision
+14:30
+rendering engine, but I still need
+14:32
+physics for gameplay. Building a physics
+14:35
+engine is itself a huge undertaking, but
+14:37
+luckily there are great open-source
+14:39
+physics engines available. I chose Jolt,
+14:42
+which is used in Horizon Forbidden West
+14:44
+and Death Stranding 2. It's possible to
+14:47
+do collision detection using the SDF
+14:50
+directly, but it is certainly not
+14:52
+trivial, and Jolt doesn't offer built-in
+14:55
+support for this. Instead, I chose to
+14:57
+generate a triangle mesh from the SCF
+15:00
+that is then fed into Jolt in chunks. I
+15:03
+don't do this for rendering, but a mesh
+15:05
+does work well for physics as long as
+15:08
+the resolution is low. I use marching
+15:10
+cubes to generate the collision mesh
+15:12
+because it's simple and easily
+15:14
+parallelized.
+15:16
+While all SDF evaluation done for
+15:18
+rendering is done on the GPU, the
+15:20
+collision mesh is generated across
+15:22
+multiple threads on the CPU for low
+15:25
+latency updates to the physics system. I
+15:27
+can make any SDF edit a dynamic physics
+15:30
+body and it will collide realistically
+15:32
+with the rest of the scene. This gets
+15:35
+particularly cool when the scene is
+15:37
+being updated dynamically, which I'll
+15:38
+show more of in a minute. I haven't said
+Terrain (also an SDF!)
+15:41
+anything about the terrain yet. Like
+15:43
+everything else, it's generated using a
+15:45
+sequence of SDF edits, but it's special
+15:48
+case for efficiency. The terrain isn't a
+15:51
+height field like in many games, but
+15:53
+rather fully 3D. It's generated
+15:55
+progressively using octaves of noise
+15:58
+with a technique heavily inspired by an
+16:00
+article by Inigo Kilas.
+16:02
+Here you can see octaves being added to
+16:05
+the terrain. It's also possible to
+16:07
+generate substantially wilder looking
+16:09
+landscapes using the same algorithm but
+16:12
+different parameters and all SDF edits
+16:15
+interact properly with the terrain. I
+16:17
+love just watching how cubes blend with
+16:19
+it. There's so much more I could say
+More examples of cool stuff
+16:22
+about how my engine works, but for now I
+16:25
+want to show more examples of the type
+16:26
+of cool stuff it enables. Because of the
+16:30
+way my engine incrementally recomputes
+16:32
+just the spatial region that has
+16:34
+changed, it supports an effectively
+16:36
+unbounded number of SDF edits. Combined
+16:39
+with the LOD system, this enables things
+16:41
+like digging kilome below the terrain
+16:44
+surface. All SDF edits are dynamic,
+16:47
+which means that any change can be
+16:49
+non-destructive.
+16:50
+Here I'm demoing a tunnel gun, which is
+16:52
+just a capsule subtraction locked to the
+16:55
+player's viewpoint. This isn't just a
+16:57
+visual effect as the physics collision
+16:59
+mesh is also updated dynamically.
+17:02
+You can also create a tunnel, walk
+17:04
+through it, and then remove it, which is
+17:06
+something I'm experimenting with for
+17:08
+gameplay. Because the physics collision
+17:11
+mesh updates dynamically, you can do
+17:13
+cool things like moving a hole around to
+17:15
+capture other objects or enemies. This
+17:18
+is one of those things that feels oddly
+17:20
+satisfying. And yes, this was inspired
+17:23
+by the game Donut County.
+17:26
+Digging is a significant component of
+17:28
+the game I'm making. In addition to
+17:30
+changing the surface shape, SCF edits
+17:33
+can volutrically stamp their material
+17:35
+underground, which allows digging into
+17:38
+ore deposits. Digging can also get kind
+17:41
+of gross depending on the material
+17:43
+you're digging into. In general, it's
+17:46
+not that hard to make things look a
+17:48
+little gross in this engine. I've been
+17:51
+focusing on subtractive edits for things
+17:53
+like digging, but edits can also be
+17:55
+additive. Here, I'm building a wall out
+17:58
+of cubes. And of course, drawing on
+18:00
+surfaces is possible. Lastly, I didn't
+18:04
+build my engine to be an SDF modeling
+18:06
+tool, but the fidelity it provides does
+18:08
+make that sort of thing possible. Here,
+18:11
+I'm putting the finishing touches on Sir
+18:13
+Potato Face.
+18:19
+You may have noticed I like debug
+18:21
+visualizations. They're extremely useful
+18:24
+for both debugging and building
+18:25
+intuition about how the various systems
+18:27
+work. Here I've enabled every debug
+18:30
+visualization at once. So useful. As
+Making a game, and wrap up
+18:34
+I've mentioned, I'm building a game with
+18:35
+this engine. I have a fairly detailed
+18:38
+plan, but there's still a lot to figure
+18:40
+out. I'll be sharing more about the
+18:42
+design as I make progress. This is my
+18:45
+first video about this project, so I'm
+18:47
+starting from nothing here on YouTube.
+18:49
+Subscribe if you think this is
+18:50
+interesting and want to hear more. I
+18:53
+also post pretty frequent updates on
+18:56
+Twitter. See the link below. Thanks for
+18:58
+watching.

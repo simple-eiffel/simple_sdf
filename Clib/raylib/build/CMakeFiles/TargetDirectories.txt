@@ -1,0 +1,3 @@
+D:/prod/simple_sdf/Clib/raylib/build/CMakeFiles/simple_raylib_wrapper.dir
+D:/prod/simple_sdf/Clib/raylib/build/CMakeFiles/ALL_BUILD.dir
+D:/prod/simple_sdf/Clib/raylib/build/CMakeFiles/ZERO_CHECK.dir

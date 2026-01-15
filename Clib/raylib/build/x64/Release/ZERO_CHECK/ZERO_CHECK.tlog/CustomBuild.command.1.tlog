@@ -1,0 +1,10 @@
+^D:\PROD\SIMPLE_SDF\CLIB\RAYLIB\BUILD\CMAKEFILES\99BB5228DEB30EFFE3ECFF5B137EB231\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -SD:/prod/simple_sdf/Clib/raylib -BD:/prod/simple_sdf/Clib/raylib/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file D:/prod/simple_sdf/Clib/raylib/build/simple_raylib_wrapper.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
