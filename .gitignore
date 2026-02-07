@@ -13,3 +13,5 @@ media/
 # Logs
 exception_trace.log
 *.log
+*.melted
+*.epr
