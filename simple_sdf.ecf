@@ -246,7 +246,6 @@
 		<root class="SDF_VISION_DEMO" feature="make"/>
 		<setting name="console_application" value="false"/>
 		<library name="vision2" location="$ISE_LIBRARY\library\vision2\vision2.ecf"/>
-		<library name="wel" location="$ISE_LIBRARY\library\wel\wel.ecf"/>
 		<library name="simple_vision" location="$SIMPLE_EIFFEL\simple_vision\simple_vision.ecf"/>
 		<library name="simple_vulkan" location="$SIMPLE_EIFFEL\simple_vulkan\simple_vulkan.ecf"/>
 		<cluster name="demo_vision" location=".\demo\">
