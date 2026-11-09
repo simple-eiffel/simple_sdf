@@ -241,21 +241,6 @@
 		<cluster name="quick" location=".\src\quick\" recursive="true"/>
 		<cluster name="visualization_minifb_quick" location=".\src\visualization\minifb\" recursive="true"/>
 	</target>
-	<target name="simple_sdf_vision_demo" extends="simple_sdf">
-		<description>SDF Vision Demo - GPU ray marching in simple_vision window (stays alive when unfocused)</description>
-		<root class="SDF_VISION_DEMO" feature="make"/>
-		<setting name="console_application" value="false"/>
-		<library name="vision2" location="$ISE_LIBRARY\library\vision2\vision2.ecf"/>
-		<library name="simple_vision" location="$SIMPLE_EIFFEL\simple_vision\simple_vision.ecf"/>
-		<library name="simple_vulkan" location="$SIMPLE_EIFFEL\simple_vulkan\simple_vulkan.ecf"/>
-		<cluster name="demo_vision" location=".\demo\">
-			<file_rule>
-				<include>/sdf_vision_demo.e$</include>
-			</file_rule>
-		</cluster>
-		<cluster name="quick" location=".\src\quick\" recursive="true"/>
-		<cluster name="visualization_vision" location=".\src\visualization\vision\" recursive="true"/>
-	</target>
 	<target name="simple_sdf_dynamic_demo" extends="simple_sdf">
 		<description>SDF Dynamic Shader Demo - Runtime GLSL compilation with DSL</description>
 		<root class="SDF_DYNAMIC_DEMO" feature="make"/>
